@@ -20,10 +20,18 @@ describe('Create Command Integration', () => {
     const scaffolder = new Scaffolder(testDir);
 
     // Create marketplace
-    await scaffolder.createMarketplace('my-marketplace', 'John Doe');
+    await scaffolder.createMarketplace({
+      name: 'my-marketplace',
+      ownerName: 'John Doe',
+      ownerEmail: 'john@example.com',
+      description: 'A test marketplace'
+    });
 
     // Create plugin
-    await scaffolder.createPlugin('my-plugin');
+    await scaffolder.createPlugin({
+      name: 'my-plugin',
+      description: 'A test plugin'
+    });
     await scaffolder.addPluginToMarketplace('my-plugin');
 
     // Verify marketplace.json
@@ -32,7 +40,10 @@ describe('Create Command Integration', () => {
     const marketplace = JSON.parse(marketplaceContent);
 
     expect(marketplace.name).toBe('my-marketplace');
+    expect(marketplace.version).toBe('1.0.0');
+    expect(marketplace.description).toBe('A test marketplace');
     expect(marketplace.owner.name).toBe('John Doe');
+    expect(marketplace.owner.email).toBe('john@example.com');
     expect(marketplace.plugins).toHaveLength(1);
     expect(marketplace.plugins[0].name).toBe('my-plugin');
 
@@ -43,20 +54,6 @@ describe('Create Command Integration', () => {
 
     expect(plugin.name).toBe('my-plugin');
     expect(plugin.version).toBe('1.0.0');
-
-    // Verify sample skill
-    const skillPath = join(testDir, 'my-plugin', '.claude-plugin', 'skills', 'summarize-project', 'SKILL.md');
-    const skillContent = await fs.readFile(skillPath, 'utf-8');
-
-    expect(skillContent).toContain('name: summarize-project');
-
-    // Verify empty directories exist
-    const commandsDir = await fs.stat(join(testDir, 'my-plugin', '.claude-plugin', 'commands'));
-    const agentsDir = await fs.stat(join(testDir, 'my-plugin', '.claude-plugin', 'agents'));
-    const scriptsDir = await fs.stat(join(testDir, 'my-plugin', '.claude-plugin', 'scripts'));
-
-    expect(commandsDir.isDirectory()).toBe(true);
-    expect(agentsDir.isDirectory()).toBe(true);
-    expect(scriptsDir.isDirectory()).toBe(true);
+    expect(plugin.description).toBe('A test plugin');
   });
 });

@@ -20,28 +20,48 @@ describe('Scaffolder', () => {
 
   describe('createMarketplace', () => {
     it('creates .claude-plugin/marketplace.json', async () => {
-      await scaffolder.createMarketplace('my-market', 'John Doe');
+      await scaffolder.createMarketplace({
+        name: 'my-market',
+        ownerName: 'John Doe'
+      });
 
       const manifestPath = join(testDir, '.claude-plugin', 'marketplace.json');
       const content = await fs.readFile(manifestPath, 'utf-8');
       const parsed = JSON.parse(content);
 
       expect(parsed.name).toBe('my-market');
+      expect(parsed.version).toBe('1.0.0');
       expect(parsed.owner.name).toBe('John Doe');
+    });
+
+    it('includes optional fields when provided', async () => {
+      await scaffolder.createMarketplace({
+        name: 'my-market',
+        ownerName: 'John Doe',
+        ownerEmail: 'john@example.com',
+        description: 'A test marketplace'
+      });
+
+      const manifestPath = join(testDir, '.claude-plugin', 'marketplace.json');
+      const content = await fs.readFile(manifestPath, 'utf-8');
+      const parsed = JSON.parse(content);
+
+      expect(parsed.owner.email).toBe('john@example.com');
+      expect(parsed.description).toBe('A test marketplace');
     });
   });
 
   describe('createPlugin', () => {
     it('creates plugin directory structure', async () => {
-      await scaffolder.createPlugin('my-plugin');
+      await scaffolder.createPlugin({ name: 'my-plugin' });
 
       const pluginDir = join(testDir, 'my-plugin', '.claude-plugin');
       const stat = await fs.stat(pluginDir);
       expect(stat.isDirectory()).toBe(true);
     });
 
-    it('creates plugin.json', async () => {
-      await scaffolder.createPlugin('my-plugin');
+    it('creates plugin.json with version', async () => {
+      await scaffolder.createPlugin({ name: 'my-plugin' });
 
       const manifestPath = join(testDir, 'my-plugin', '.claude-plugin', 'plugin.json');
       const content = await fs.readFile(manifestPath, 'utf-8');
@@ -51,36 +71,53 @@ describe('Scaffolder', () => {
       expect(parsed.version).toBe('1.0.0');
     });
 
-    it('creates skills directory with sample skill', async () => {
-      await scaffolder.createPlugin('my-plugin');
+    it('includes description when provided', async () => {
+      await scaffolder.createPlugin({
+        name: 'my-plugin',
+        description: 'A test plugin'
+      });
 
-      const skillPath = join(testDir, 'my-plugin', '.claude-plugin', 'skills', 'summarize-project', 'SKILL.md');
-      const content = await fs.readFile(skillPath, 'utf-8');
+      const manifestPath = join(testDir, 'my-plugin', '.claude-plugin', 'plugin.json');
+      const content = await fs.readFile(manifestPath, 'utf-8');
+      const parsed = JSON.parse(content);
 
-      expect(content).toContain('name: summarize-project');
+      expect(parsed.description).toBe('A test plugin');
     });
 
-    it('creates empty directories for commands, agents, scripts', async () => {
-      await scaffolder.createPlugin('my-plugin');
+    it('creates content directories at plugin root level', async () => {
+      await scaffolder.createPlugin({ name: 'my-plugin' });
 
-      const baseDir = join(testDir, 'my-plugin', '.claude-plugin');
+      const pluginRoot = join(testDir, 'my-plugin');
 
-      const commandsDir = await fs.stat(join(baseDir, 'commands'));
-      const agentsDir = await fs.stat(join(baseDir, 'agents'));
-      const scriptsDir = await fs.stat(join(baseDir, 'scripts'));
+      const skillsDir = await fs.stat(join(pluginRoot, 'skills'));
+      const commandsDir = await fs.stat(join(pluginRoot, 'commands'));
+      const agentsDir = await fs.stat(join(pluginRoot, 'agents'));
+      const scriptsDir = await fs.stat(join(pluginRoot, 'scripts'));
 
+      expect(skillsDir.isDirectory()).toBe(true);
       expect(commandsDir.isDirectory()).toBe(true);
       expect(agentsDir.isDirectory()).toBe(true);
       expect(scriptsDir.isDirectory()).toBe(true);
+    });
+
+    it('creates sample hello-world skill', async () => {
+      await scaffolder.createPlugin({ name: 'my-plugin' });
+
+      const skillPath = join(testDir, 'my-plugin', 'skills', 'hello-world', 'SKILL.md');
+      const content = await fs.readFile(skillPath, 'utf-8');
+
+      expect(content).toContain('name: hello-world');
+      expect(content).toContain('description:');
     });
   });
 
   describe('addPluginToMarketplace', () => {
     it('adds plugin entry to marketplace.json', async () => {
-      // Create marketplace first
-      await scaffolder.createMarketplace('my-market', 'John Doe');
+      await scaffolder.createMarketplace({
+        name: 'my-market',
+        ownerName: 'John Doe'
+      });
 
-      // Add plugin
       await scaffolder.addPluginToMarketplace('my-plugin');
 
       const manifestPath = join(testDir, '.claude-plugin', 'marketplace.json');
@@ -93,7 +130,10 @@ describe('Scaffolder', () => {
     });
 
     it('appends to existing plugins array', async () => {
-      await scaffolder.createMarketplace('my-market', 'John Doe');
+      await scaffolder.createMarketplace({
+        name: 'my-market',
+        ownerName: 'John Doe'
+      });
       await scaffolder.addPluginToMarketplace('plugin-a');
       await scaffolder.addPluginToMarketplace('plugin-b');
 
@@ -112,7 +152,10 @@ describe('Scaffolder', () => {
     });
 
     it('returns true when marketplace exists', async () => {
-      await scaffolder.createMarketplace('my-market', 'John Doe');
+      await scaffolder.createMarketplace({
+        name: 'my-market',
+        ownerName: 'John Doe'
+      });
 
       const result = await scaffolder.hasMarketplace();
       expect(result).toBe(true);
@@ -121,14 +164,20 @@ describe('Scaffolder', () => {
 
   describe('pluginExists', () => {
     it('returns false when plugin does not exist', async () => {
-      await scaffolder.createMarketplace('my-market', 'John Doe');
+      await scaffolder.createMarketplace({
+        name: 'my-market',
+        ownerName: 'John Doe'
+      });
 
       const result = await scaffolder.pluginExists('my-plugin');
       expect(result).toBe(false);
     });
 
     it('returns true when plugin exists in marketplace', async () => {
-      await scaffolder.createMarketplace('my-market', 'John Doe');
+      await scaffolder.createMarketplace({
+        name: 'my-market',
+        ownerName: 'John Doe'
+      });
       await scaffolder.addPluginToMarketplace('my-plugin');
 
       const result = await scaffolder.pluginExists('my-plugin');

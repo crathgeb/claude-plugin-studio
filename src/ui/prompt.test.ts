@@ -86,4 +86,40 @@ describe('Prompt', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('askOwnerEmail', () => {
+    it('returns user input trimmed', async () => {
+      vi.mocked(inquirer.prompt).mockResolvedValue({ email: '  john@example.com  ' });
+
+      const result = await prompt.askOwnerEmail();
+
+      expect(result).toBe('john@example.com');
+    });
+
+    it('returns empty string when no input', async () => {
+      vi.mocked(inquirer.prompt).mockResolvedValue({ email: '' });
+
+      const result = await prompt.askOwnerEmail();
+
+      expect(result).toBe('');
+    });
+  });
+
+  describe('askDescription', () => {
+    it('returns user input for marketplace', async () => {
+      vi.mocked(inquirer.prompt).mockResolvedValue({ description: 'My marketplace' });
+
+      const result = await prompt.askDescription('marketplace');
+
+      expect(result).toBe('My marketplace');
+    });
+
+    it('returns user input for plugin', async () => {
+      vi.mocked(inquirer.prompt).mockResolvedValue({ description: 'My plugin' });
+
+      const result = await prompt.askDescription('plugin');
+
+      expect(result).toBe('My plugin');
+    });
+  });
 });

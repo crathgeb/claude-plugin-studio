@@ -113,4 +113,32 @@ export class Prompt {
     ]);
     return createPlugin;
   }
+
+  async askOwnerEmail(): Promise<string> {
+    const { email } = await inquirer.prompt<{ email: string }>([
+      {
+        type: 'input',
+        name: 'email',
+        message: 'Owner email (optional):',
+      }
+    ]);
+    return email.trim();
+  }
+
+  async askDescription(type: 'marketplace' | 'plugin'): Promise<string> {
+    const { description } = await inquirer.prompt<{ description: string }>([
+      {
+        type: 'input',
+        name: 'description',
+        message: `${type === 'marketplace' ? 'Marketplace' : 'Plugin'} description:`,
+        validate: (input: string) => {
+          if (!input.trim()) {
+            return 'Description is required';
+          }
+          return true;
+        }
+      }
+    ]);
+    return description.trim();
+  }
 }

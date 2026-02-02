@@ -22,18 +22,29 @@ describe('CreateCommand', () => {
     prompt = new Prompt();
     logger = new Logger('normal');
     command = new CreateCommand(scaffolder, prompt, logger);
+
+    // Default mock implementations for new prompts
+    vi.mocked(prompt.askDescription).mockResolvedValue('A description');
+    vi.mocked(prompt.askOwnerEmail).mockResolvedValue('');
   });
 
   describe('run', () => {
     it('creates marketplace when none exists', async () => {
       vi.mocked(scaffolder.hasMarketplace).mockResolvedValue(false);
       vi.mocked(prompt.askMarketplaceName).mockResolvedValue('my-market');
+      vi.mocked(prompt.askDescription).mockResolvedValue('My marketplace description');
       vi.mocked(prompt.askOwnerName).mockResolvedValue('John Doe');
+      vi.mocked(prompt.askOwnerEmail).mockResolvedValue('john@example.com');
       vi.mocked(prompt.askCreatePlugin).mockResolvedValue(false);
 
       await command.run();
 
-      expect(scaffolder.createMarketplace).toHaveBeenCalledWith('my-market', 'John Doe');
+      expect(scaffolder.createMarketplace).toHaveBeenCalledWith({
+        name: 'my-market',
+        description: 'My marketplace description',
+        ownerName: 'John Doe',
+        ownerEmail: 'john@example.com'
+      });
     });
 
     it('skips marketplace creation when one exists', async () => {
@@ -52,11 +63,15 @@ describe('CreateCommand', () => {
       vi.mocked(prompt.askOwnerName).mockResolvedValue('John Doe');
       vi.mocked(prompt.askCreatePlugin).mockResolvedValue(true);
       vi.mocked(prompt.askPluginName).mockResolvedValue('my-plugin');
+      vi.mocked(prompt.askDescription).mockResolvedValue('A plugin description');
       vi.mocked(scaffolder.pluginExists).mockResolvedValue(false);
 
       await command.run();
 
-      expect(scaffolder.createPlugin).toHaveBeenCalledWith('my-plugin');
+      expect(scaffolder.createPlugin).toHaveBeenCalledWith({
+        name: 'my-plugin',
+        description: 'A plugin description'
+      });
       expect(scaffolder.addPluginToMarketplace).toHaveBeenCalledWith('my-plugin');
     });
 
@@ -83,7 +98,10 @@ describe('CreateCommand', () => {
       await command.run();
 
       expect(prompt.askPluginName).toHaveBeenCalledTimes(2);
-      expect(scaffolder.createPlugin).toHaveBeenCalledWith('new-plugin');
+      expect(scaffolder.createPlugin).toHaveBeenCalledWith({
+        name: 'new-plugin',
+        description: 'A description'
+      });
     });
   });
 });

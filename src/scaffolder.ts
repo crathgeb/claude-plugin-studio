@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { Templates } from './templates/index.js';
 import type { MarketplaceManifest } from './types.js';
+import type { MarketplaceOptions, PluginOptions } from './templates/index.js';
 
 export class Scaffolder {
   private claudePluginDir: string;
@@ -11,30 +12,34 @@ export class Scaffolder {
     this.claudePluginDir = join(rootDir, '.claude-plugin');
   }
 
-  async createMarketplace(name: string, ownerName: string): Promise<void> {
+  async createMarketplace(options: MarketplaceOptions): Promise<void> {
     await fs.mkdir(this.claudePluginDir, { recursive: true });
 
     const manifestPath = join(this.claudePluginDir, 'marketplace.json');
-    const content = Templates.marketplaceJson(name, ownerName);
+    const content = Templates.marketplaceJson(options);
     await fs.writeFile(manifestPath, content, 'utf-8');
   }
 
-  async createPlugin(name: string): Promise<void> {
-    const pluginDir = join(this.rootDir, name, '.claude-plugin');
+  async createPlugin(options: PluginOptions): Promise<void> {
+    const pluginRoot = join(this.rootDir, options.name);
+    const claudePluginDir = join(pluginRoot, '.claude-plugin');
 
-    // Create directories
-    await fs.mkdir(join(pluginDir, 'skills', 'summarize-project'), { recursive: true });
-    await fs.mkdir(join(pluginDir, 'commands'), { recursive: true });
-    await fs.mkdir(join(pluginDir, 'agents'), { recursive: true });
-    await fs.mkdir(join(pluginDir, 'scripts'), { recursive: true });
+    // Create .claude-plugin directory
+    await fs.mkdir(claudePluginDir, { recursive: true });
+
+    // Create content directories at plugin root level
+    await fs.mkdir(join(pluginRoot, 'skills', 'hello-world'), { recursive: true });
+    await fs.mkdir(join(pluginRoot, 'commands'), { recursive: true });
+    await fs.mkdir(join(pluginRoot, 'agents'), { recursive: true });
+    await fs.mkdir(join(pluginRoot, 'scripts'), { recursive: true });
 
     // Write plugin.json
-    const manifestPath = join(pluginDir, 'plugin.json');
-    await fs.writeFile(manifestPath, Templates.pluginJson(name), 'utf-8');
+    const manifestPath = join(claudePluginDir, 'plugin.json');
+    await fs.writeFile(manifestPath, Templates.pluginJson(options), 'utf-8');
 
     // Write sample skill
-    const skillPath = join(pluginDir, 'skills', 'summarize-project', 'SKILL.md');
-    await fs.writeFile(skillPath, Templates.sampleSkill(), 'utf-8');
+    const skillPath = join(pluginRoot, 'skills', 'hello-world', 'SKILL.md');
+    await fs.writeFile(skillPath, Templates.helloWorldSkill(), 'utf-8');
   }
 
   async addPluginToMarketplace(pluginName: string): Promise<void> {

@@ -1,47 +1,44 @@
 // src/templates/index.ts
 import type { MarketplacePluginEntry } from '../types.js';
 
+export interface MarketplaceOptions {
+  name: string;
+  ownerName: string;
+  ownerEmail?: string;
+  description?: string;
+}
+
+export interface PluginOptions {
+  name: string;
+  description?: string;
+}
+
 export class Templates {
-  static marketplaceJson(name: string, ownerName: string): string {
-    const manifest = {
-      name,
-      owner: { name: ownerName },
+  static marketplaceJson(options: MarketplaceOptions): string {
+    const manifest: Record<string, unknown> = {
+      name: options.name,
+      version: '1.0.0',
+      owner: {
+        name: options.ownerName,
+        ...(options.ownerEmail && { email: options.ownerEmail })
+      },
       plugins: []
     };
+    if (options.description) {
+      manifest.description = options.description;
+    }
     return JSON.stringify(manifest, null, 2);
   }
 
-  static pluginJson(name: string): string {
-    const manifest = {
-      name,
-      version: '1.0.0',
-      skills: 'skills'
+  static pluginJson(options: PluginOptions): string {
+    const manifest: Record<string, unknown> = {
+      name: options.name,
+      version: '1.0.0'
     };
+    if (options.description) {
+      manifest.description = options.description;
+    }
     return JSON.stringify(manifest, null, 2);
-  }
-
-  static sampleSkill(): string {
-    return `---
-name: summarize-project
-description: Summarize the current project structure and purpose
----
-
-# Summarize Project
-
-Analyze the current project and provide a concise summary.
-
-## Instructions
-
-1. Read the project's README.md if it exists
-2. Scan the directory structure to understand the layout
-3. Look for package.json, pyproject.toml, or similar config files
-4. Provide a brief summary including:
-   - What the project does
-   - Main technologies used
-   - Key directories and their purposes
-
-Keep the summary under 200 words.
-`;
   }
 
   static pluginEntry(name: string): MarketplacePluginEntry {
@@ -49,5 +46,21 @@ Keep the summary under 200 words.
       name,
       source: `./${name}`
     };
+  }
+
+  static helloWorldSkill(): string {
+    return `---
+name: hello-world
+description: A simple greeting skill to test your plugin setup
+---
+
+# Hello World
+
+Greet the user with a friendly message.
+
+## Instructions
+
+When invoked, respond with a warm, friendly greeting. You can personalize it based on context if available.
+`;
   }
 }
