@@ -44,4 +44,73 @@ export class Prompt {
 
     return selected;
   }
+
+  async askMarketplaceName(): Promise<string> {
+    const { name } = await inquirer.prompt<{ name: string }>([
+      {
+        type: 'input',
+        name: 'name',
+        message: 'Marketplace name (kebab-case):',
+        validate: (input: string) => {
+          if (!input.trim()) {
+            return 'Name is required';
+          }
+          if (!/^[a-z0-9-]+$/.test(input)) {
+            return 'Name must be kebab-case (lowercase letters, numbers, hyphens)';
+          }
+          return true;
+        }
+      }
+    ]);
+    return name;
+  }
+
+  async askOwnerName(): Promise<string> {
+    const { ownerName } = await inquirer.prompt<{ ownerName: string }>([
+      {
+        type: 'input',
+        name: 'ownerName',
+        message: 'Owner name:',
+        validate: (input: string) => {
+          if (!input.trim()) {
+            return 'Owner name is required';
+          }
+          return true;
+        }
+      }
+    ]);
+    return ownerName;
+  }
+
+  async askPluginName(): Promise<string> {
+    const { name } = await inquirer.prompt<{ name: string }>([
+      {
+        type: 'input',
+        name: 'name',
+        message: 'Plugin name (kebab-case):',
+        validate: (input: string) => {
+          if (!input.trim()) {
+            return 'Name is required';
+          }
+          if (!/^[a-z0-9-]+$/.test(input)) {
+            return 'Name must be kebab-case (lowercase letters, numbers, hyphens)';
+          }
+          return true;
+        }
+      }
+    ]);
+    return name;
+  }
+
+  async askCreatePlugin(): Promise<boolean> {
+    const { createPlugin } = await inquirer.prompt<{ createPlugin: boolean }>([
+      {
+        type: 'confirm',
+        name: 'createPlugin',
+        message: 'Create a plugin now?',
+        default: true
+      }
+    ]);
+    return createPlugin;
+  }
 }
