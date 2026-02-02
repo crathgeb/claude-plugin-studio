@@ -1,0 +1,44 @@
+{
+  "name": "claude-plugin-studio",
+  "version": "0.1.0",
+  "description": "Development tool for Claude Code plugins - watch, validate, and auto-sync",
+  "type": "module",
+  "main": "./dist/cli.js",
+  "bin": {
+    "cps": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsup src/cli.ts --format esm --dts --clean",
+    "dev": "tsup src/cli.ts --format esm --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "plugin",
+    "development",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "chalk": "^5.3.0",
+    "chokidar": "^4.0.3",
+    "commander": "^13.1.0",
+    "inquirer": "^12.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
