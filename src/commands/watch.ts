@@ -38,6 +38,47 @@ export class WatchCommand {
       process.exit(1);
     }
 
+    // Find parent marketplace for a plugin (if any)
+    const findParentMarketplace = (pluginPath: string): DiscoveredItem | undefined => {
+      return selected.find(
+        (s) => s.type === 'marketplace' && pluginPath.startsWith(s.path + '/')
+      );
+    };
+
+    // Get unique marketplaces to sync (including parent marketplaces of selected plugins)
+    const marketplacesToSync = new Map<string, DiscoveredItem>();
+    for (const item of selected) {
+      if (item.type === 'marketplace') {
+        marketplacesToSync.set(item.name, item);
+      } else {
+        const parent = findParentMarketplace(item.path);
+        if (parent) {
+          marketplacesToSync.set(parent.name, parent);
+        }
+      }
+    }
+
+    // Initial sync
+    logger.info('');
+    logger.info(chalk.bold('Initial sync...'));
+    for (const marketplace of marketplacesToSync.values()) {
+      logger.info(`Validating ${marketplace.name}...`);
+
+      const result = await validator.validateMarketplace(marketplace.path);
+      if (!result.valid) {
+        logger.validationError(result.errors);
+        continue;
+      }
+
+      logger.success('Valid. Syncing...');
+      const syncResult = await syncer.syncMarketplace(marketplace.name, marketplace.path);
+      if (syncResult.success) {
+        logger.success(`Synced ${marketplace.name}`);
+      } else {
+        logger.error(syncResult.message);
+      }
+    }
+
     // Log what we're watching
     logger.info('');
     logger.info(chalk.bold('Watching:'));
@@ -52,13 +93,23 @@ export class WatchCommand {
 
     // Handle changes
     const handleChange = async (item: DiscoveredItem) => {
-      logger.info(`Validating ${item.name}...`);
+      // If this is a plugin inside a marketplace, sync the marketplace instead
+      let syncTarget = item;
+      if (item.type === 'plugin') {
+        const parentMarketplace = findParentMarketplace(item.path);
+        if (parentMarketplace) {
+          syncTarget = parentMarketplace;
+          logger.info(`Plugin ${item.name} is part of marketplace ${parentMarketplace.name}`);
+        }
+      }
+
+      logger.info(`Validating ${syncTarget.name}...`);
 
       // Run validation
       const result =
-        item.type === 'marketplace'
-          ? await validator.validateMarketplace(item.path)
-          : await validator.validatePlugin(item.path);
+        syncTarget.type === 'marketplace'
+          ? await validator.validateMarketplace(syncTarget.path)
+          : await validator.validatePlugin(syncTarget.path);
 
       if (!result.valid) {
         logger.validationError(result.errors);
@@ -69,12 +120,12 @@ export class WatchCommand {
 
       // Sync
       const syncResult =
-        item.type === 'marketplace'
-          ? await syncer.syncMarketplace(item.name, item.path)
-          : await syncer.syncPlugin(item.name, item.path);
+        syncTarget.type === 'marketplace'
+          ? await syncer.syncMarketplace(syncTarget.name, syncTarget.path)
+          : await syncer.syncPlugin(syncTarget.name, syncTarget.path);
 
       if (syncResult.success) {
-        logger.success(`Synced ${item.name}`);
+        logger.success(`Synced ${syncTarget.name}`);
       } else {
         logger.error(syncResult.message);
       }

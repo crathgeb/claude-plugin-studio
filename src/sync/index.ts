@@ -1,9 +1,11 @@
 // src/sync/index.ts
+import { promises as fs } from 'node:fs';
+import { join } from 'node:path';
 import { CacheManager } from './cache.js';
 import { Installer } from './installer.js';
 import { SettingsReader } from './settings.js';
 import { Logger } from '../ui/logger.js';
-import type { SyncResult } from '../types.js';
+import type { SyncResult, MarketplaceManifest } from '../types.js';
 
 export class Syncer {
   private cacheManager = new CacheManager();
@@ -25,7 +27,11 @@ export class Syncer {
     }
     this.logger.info(`Cleared cache: ${this.cacheManager.getCachePath(marketplaceName)}`);
 
-    // Step 2: Re-add marketplace
+    // Step 2: Remove existing marketplace (ignore errors if not installed)
+    this.logger.command(this.installer.buildMarketplaceRemoveCommand(marketplaceName));
+    await this.installer.removeMarketplace(marketplaceName);
+
+    // Step 3: Re-add marketplace
     this.logger.command(this.installer.buildMarketplaceAddCommand(marketplacePath));
     const addResult = await this.installer.addMarketplace(marketplacePath);
     if (!addResult.success) {
@@ -34,11 +40,21 @@ export class Syncer {
     }
     this.logger.debug(addResult.message);
 
-    // Step 3: Reinstall previously installed plugins
-    const installedPlugins =
-      await this.settingsReader.getInstalledPlugins(marketplaceName);
+    // Step 4: Install all plugins from marketplace manifest
+    const manifestPath = join(marketplacePath, '.claude-plugin', 'marketplace.json');
+    let pluginsToInstall: string[] = [];
 
-    for (const pluginName of installedPlugins) {
+    try {
+      const content = await fs.readFile(manifestPath, 'utf-8');
+      const manifest: MarketplaceManifest = JSON.parse(content);
+      pluginsToInstall = manifest.plugins.map((p) => p.name);
+    } catch {
+      // Fall back to previously installed plugins from settings
+      this.logger.warn('Could not read marketplace manifest, using settings.json');
+      pluginsToInstall = await this.settingsReader.getInstalledPlugins(marketplaceName);
+    }
+
+    for (const pluginName of pluginsToInstall) {
       this.logger.command(
         this.installer.buildPluginInstallCommand(pluginName, marketplaceName)
       );
@@ -48,7 +64,7 @@ export class Syncer {
       );
       if (!installResult.success) {
         this.logger.warn(
-          `Failed to reinstall ${pluginName}: ${installResult.message}`
+          `Failed to install ${pluginName}: ${installResult.message}`
         );
       } else {
         this.logger.debug(installResult.message);

@@ -31,9 +31,10 @@ describe('Watcher', () => {
     const watcher = new Watcher(mockLogger);
     const patterns = watcher.getWatchPatterns(item);
 
-    expect(patterns).toContain(join(testDir, '.claude-plugin', '**/*'));
-    expect(patterns).toContain(join(testDir, 'skills', '**/*'));
-    expect(patterns).toContain(join(testDir, 'commands', '**/*'));
+    // Chokidar 4.x removed glob support - we now use directory paths
+    expect(patterns).toContain(join(testDir, '.claude-plugin'));
+    expect(patterns).toContain(join(testDir, 'skills'));
+    expect(patterns).toContain(join(testDir, 'commands'));
   });
 
   it('returns watch patterns for plugin', () => {
@@ -47,7 +48,8 @@ describe('Watcher', () => {
     const watcher = new Watcher(mockLogger);
     const patterns = watcher.getWatchPatterns(item);
 
-    expect(patterns).toContain(join(testDir, '.claude-plugin', '**/*'));
-    expect(patterns).toContain(join(testDir, 'skills', '**/*'));
+    // Chokidar 4.x removed glob support - we now use directory paths
+    expect(patterns).toContain(join(testDir, '.claude-plugin'));
+    expect(patterns).toContain(join(testDir, 'skills'));
   });
 });

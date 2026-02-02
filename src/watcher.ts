@@ -15,12 +15,14 @@ export class Watcher {
 
   getWatchPatterns(item: DiscoveredItem): string[] {
     const base = item.path;
+    // Chokidar 4.x removed glob support - use directory paths instead
+    // Chokidar watches directories recursively by default
     return [
-      join(base, '.claude-plugin', '**/*'),
-      join(base, 'skills', '**/*'),
-      join(base, 'commands', '**/*'),
-      join(base, 'agents', '**/*'),
-      join(base, 'hooks', '**/*'),
+      join(base, '.claude-plugin'),
+      join(base, 'skills'),
+      join(base, 'commands'),
+      join(base, 'agents'),
+      join(base, 'hooks'),
       join(base, '.mcp.json'),
       join(base, '.lsp.json')
     ];

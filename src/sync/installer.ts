@@ -6,6 +6,10 @@ import type { SyncResult } from '../types.js';
 const execAsync = promisify(exec);
 
 export class Installer {
+  buildMarketplaceRemoveCommand(marketplaceName: string): string {
+    return `claude plugin marketplace remove ${marketplaceName}`;
+  }
+
   buildMarketplaceAddCommand(marketplacePath: string): string {
     return `claude plugin marketplace add "${marketplacePath}"`;
   }
@@ -15,6 +19,24 @@ export class Installer {
     marketplaceName: string
   ): string {
     return `claude plugin install ${pluginName}@${marketplaceName}`;
+  }
+
+  async removeMarketplace(marketplaceName: string): Promise<SyncResult> {
+    const cmd = this.buildMarketplaceRemoveCommand(marketplaceName);
+
+    try {
+      await execAsync(cmd, { timeout: 60000 });
+      return {
+        success: true,
+        message: `Removed marketplace ${marketplaceName}`
+      };
+    } catch (error: unknown) {
+      // Ignore errors - marketplace might not exist
+      return {
+        success: true,
+        message: `Marketplace ${marketplaceName} not installed (ok)`
+      };
+    }
   }
 
   async addMarketplace(marketplacePath: string): Promise<SyncResult> {
