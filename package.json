@@ -5,7 +5,14 @@
   "type": "module",
   "main": "./dist/cli.js",
   "bin": {
-    "cps": "./dist/cli.js"
+    "cps": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crathgeb/claude-plugin-studio.git"
   },
   "scripts": {
     "build": "tsup src/cli.ts --format esm --dts --clean",
@@ -23,7 +30,11 @@
     "development",
     "cli"
   ],
-  "author": "",
+  "author": {
+    "name": "crathgeb",
+    "email": "chrisrathgeb@gmail.com",
+    "url": "https://github.com/crathgeb"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
