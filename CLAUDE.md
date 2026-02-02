@@ -10,10 +10,15 @@ Development tool for Claude Code plugins - watch, validate, and auto-sync during
 - `npm run test:run` - Run tests once
 - `npm run typecheck` - Type check without emitting
 - `npm link` - Link globally to use `cps` command
-- `cps` - Start watching plugins/marketplaces
+
+### CLI Commands
+
+- `cps` - Start watching plugins/marketplaces (default action)
+- `cps watch` - Explicit watch command
 - `cps validate` - One-time validation without watching
-- `cps --verbose` - Watch with detailed output
-- `cps --quiet` - Watch with errors only
+- `cps create` - Interactively create a new marketplace or plugin
+- `cps --verbose` or `-v` - Run with detailed output
+- `cps --quiet` or `-q` - Run with errors only
 
 ## Code Style
 
@@ -32,6 +37,12 @@ src/
 ├── types.ts            # Shared TypeScript interfaces
 ├── scanner.ts          # Finds plugins/marketplaces recursively
 ├── watcher.ts          # File watching with chokidar (300ms debounce)
+├── scaffolder.ts       # Creates plugin/marketplace scaffolding
+├── commands/           # CLI command implementations
+│   ├── watch.ts        # Watch command logic
+│   └── create.ts       # Create command logic
+├── templates/          # Template generators
+│   └── index.ts        # Generates manifests and sample skills
 ├── schemas/            # JSON schemas for validation
 │   ├── plugin.schema.json
 │   └── marketplace.schema.json
@@ -78,7 +89,9 @@ src/
 
 - `src/types.ts` - All shared interfaces (PluginManifest, ValidationResult, etc.)
 - `src/schemas/*.json` - JSON schemas defining valid plugin/marketplace structure
-- `src/cli.ts` - Main entry point, defines `cps` and `cps validate` commands
+- `src/cli.ts` - Main entry point, defines all CLI commands
+- `src/scaffolder.ts` - Creates plugin/marketplace directory structures
+- `src/templates/index.ts` - Template content for manifests and sample skills
 
 ## Claude Code Plugin Structure
 
